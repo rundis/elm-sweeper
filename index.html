@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <title>Minesweeper</title>
+    <link rel="stylesheet" href="/styles/reset.css">
+    <link rel="stylesheet" href="/styles/base.css">
+  </head>
+  <body>
+    <div id="main">
+      <div id="board"></div>
+    </div>
+    <script type="text/javascript" src="minesweeper.js"></script>
+    <script type="text/javascript" src="/_reactor/debug.js"></script>
+
+    <script type="text/javascript">
+      var main = Elm.fullscreenDebug('Minesweeper', 'Minesweeper.elm');
+    </script>
+
+  </body>
+</html>
