@@ -43,6 +43,7 @@ onEEdge game tile =
   (tile.id % game.cols) == game.cols - 1
 
 
+
 neighbourByDir : Game -> Maybe Tile -> Direction -> Maybe Tile
 neighbourByDir game tile dir =
   let

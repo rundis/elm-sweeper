@@ -15,9 +15,14 @@ implementation which is using https://facebook.github.io/react/[Facebook React].
 == Get it up and running
 . http://elm-lang.org/install[Install elm]
 . Clone the repo
-. On the command line: `$elm-sweeper> elm-make Minsweeper.elm --yes --output=minesweeper.js
 . On the command line: `$elm-sweeper> elm-reactor`
-. Open a browser-window/tab and enter the following url: `http://localhost:8000/index.html`
+. Open a browser-window/tab and enter the following url: `http://localhost:8000/start.html`
+
+NOTE: The first time might take a little while as it will be downloading dependencies and run elm-make
+
+
+TIP: If it's not working, it might be worth trying to run `elm-package install` from the command line
+to see if it manages to download all required dependencies.
 
 
 == Resources

@@ -25,9 +25,9 @@ init =
 update : (Float, Action) -> Game -> Game
 update (time, action) game =
   case action of
-    NewGame -> Game.createGame 15 15 (Debug.watch "atimes" (truncate time))
+    NewGame -> Game.createGame 15 15 (truncate time)
     RevealTile id -> if Game.gameOver game then game else
-                       Debug.watch "game" (Game.revealTile game id)
+                        Debug.watch "game" (Game.revealTile game id)
 
 
 threatCount : Maybe Int -> List Html
