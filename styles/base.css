@@ -34,9 +34,12 @@ body {
 
 h1 {font-size: 18px; margin: 20px;}
 
+.status-lost {color: red;}
+.status-won {color: green;}
+
 button {
     border: none;
-    background: transparent;
+    background: lightgray;
     color: #000;
     font-weight: bold;
     outline: none;

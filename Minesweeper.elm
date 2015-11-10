@@ -7,22 +7,27 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import StartApp.Simple
+import Time
+import Task
 import Debug
 
 
 type Action =
-  RevealTile Int
+  NewGame
+  | RevealTile Int
 
 
 init : Game
 init =
-  Game.createGame 15 10 123545
+  Game.createGame 15 15 5787345
 
 
-update : Action -> Game -> Game
-update action game =
+update : (Float, Action) -> Game -> Game
+update (time, action) game =
   case action of
-    RevealTile id -> Debug.watch "game" (Game.revealTile game id)
+    NewGame -> Game.createGame 15 15 (Debug.watch "atimes" (truncate time))
+    RevealTile id -> if Game.gameOver game then game else
+                       Debug.watch "game" (Game.revealTile game id)
 
 
 threatCount : Maybe Int -> List Html
@@ -48,21 +53,52 @@ rowView address tiles =
   div [class "row"] (List.map (tileView address) tiles)
 
 
+
+statusView: Game -> Html
+statusView game =
+  let
+    (status, c) = case (game.isSafe, game.isDead) of
+                    (True, _)  -> (" -  You won", "status-won")
+                    (_, True) ->  (" - You lost", "status-lost")
+                    (_, _)     -> ("", "")
+  in
+    span [class c] [text status]
+
+
 view : Signal.Address Action -> Game -> Html
 view address game =
   let
     rows = Utils.partitionByN game.cols game.tiles
   in
     div [id "main"] [
-      h1 [] [text "Minesweeper"],
-      div [class "board"] (List.map (rowView address) rows)
+      h1 [] [text "Minesweeper", statusView game],
+      div [class "board"] (List.map (rowView address) rows),
+      div [] [button [class "button", onClick address NewGame] [text "Reset"]]
     ]
 
 
-main : Signal Html
+{- main : Signal Html
 main =
   StartApp.Simple.start
     { model = init
     , update = update
     , view = view
     }
+ -}
+
+-- Without start-app
+actions: Signal.Mailbox Action
+actions =
+  Signal.mailbox NewGame
+
+model: Signal Game
+model =
+  Signal.foldp update init (Time.timestamp actions.signal)
+
+main : Signal Html
+main =
+  Signal.map (view actions.address) model
+
+port initGame : Task.Task x ()
+port initGame =
+  Signal.send actions.address NewGame

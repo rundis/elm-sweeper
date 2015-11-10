@@ -1,8 +1,9 @@
-module Game (Game, Tile, createGame, revealTile) where
+module Game (Game, Tile, createGame, revealTile, gameOver) where
 
 import List
 import Random
 import Array
+import Utils exposing (randBools)
 
 
 type alias Tile =
@@ -46,17 +47,19 @@ neighbourByDir : Game -> Maybe Tile -> Direction -> Maybe Tile
 neighbourByDir game tile dir =
   let
     tIdx = tileByIdx game
+    isWOk = (\t -> not <| onWEdge game t)
+    isEOk = (\t -> not <| onEEdge game t)
   in
     case (tile, dir) of
-      (Just t, W)  -> if not <| onWEdge game t then tIdx <| t.id - 1 else Nothing
-      (Just t, NW) -> if not <| onWEdge game t then tIdx <| t.id - game.cols - 1 else Nothing
+      (Nothing, _) -> Nothing
       (Just t, N)  -> tIdx <| t.id - game.cols
-      (Just t, NE) -> if not <| onEEdge game t then tIdx <| t.id - game.cols + 1 else Nothing
-      (Just t, E)  -> if not <| onEEdge game t then tIdx <| t.id + 1 else Nothing
-      (Just t, SE) -> if not <| onEEdge game t then tIdx <| t.id + game.cols + 1 else Nothing
       (Just t, S)  -> tIdx <| t.id + game.cols
-      (Just t, SW) -> if not <| onWEdge game t then tIdx <| t.id + game.cols - 1 else Nothing
-      (Nothing, _) -> tile
+      (Just t, W)  -> if isWOk t then tIdx <| t.id - 1             else Nothing
+      (Just t, NW) -> if isWOk t then tIdx <| t.id - game.cols - 1 else Nothing
+      (Just t, SW) -> if isWOk t then tIdx <| t.id + game.cols - 1 else Nothing
+      (Just t, E)  -> if isEOk t then tIdx <| t.id + 1             else Nothing
+      (Just t, NE) -> if isEOk t then tIdx <| t.id - game.cols + 1 else Nothing
+      (Just t, SE) -> if isEOk t then tIdx <| t.id + game.cols + 1 else Nothing
 
 
 neighbours : Game -> Maybe Tile -> List Tile
@@ -83,9 +86,13 @@ updateIn  idx f items =
       Nothing -> items
 
 
+revealMine : Tile -> Tile
+revealMine tile =
+  {tile | isRevealed <- tile.isRevealed || tile.isMine }
+
 revealMines : Game -> Game
 revealMines game =
-  {game | tiles  <- List.map (\t -> {t | isRevealed <- t.isRevealed || t.isMine}) game.tiles
+  {game | tiles  <- List.map revealMine game.tiles
         , isDead <- True}
 
 
@@ -115,13 +122,17 @@ revealAdjacentSafeTiles game tileId =
 isSafe : Game -> Bool
 isSafe game =
   (List.filter (\t -> t.isMine && t.isRevealed) game.tiles |> List.length) == 0
-    && (List.filter (\t -> (not t.isMine) && (not t.isRevealed)) game.tiles |> List.length) == 0
+    && (List.filter (\t -> not t.isMine && not t.isRevealed) game.tiles |> List.length) == 0
+
+
+gameOver : Game -> Bool
+gameOver game =
+  game.isSafe || game.isDead
 
 
 attemptWinning : Game -> Game
 attemptWinning game =
   {game | isSafe <- isSafe game }
---  if isSafe game then {game | isSafe <- True} else game
 
 
 
@@ -139,31 +150,15 @@ revealTile game tileId =
           attemptWinning <| revealAdjacentSafeTiles game tileId
 
 
-randBools : Int -> Int -> List Bool
-randBools count seedVal =
-    let
-      intList = Random.generate (Random.list count <| Random.int 0 100) (Random.initialSeed seedVal) |> fst
-    in
-      List.map (\n -> (n % 2) == 1 ) intList
+createTile : Int -> Bool -> Tile
+createTile id isMine =
+  Tile id Nothing False isMine
+
+createTiles : Int -> Int -> List Tile
+createTiles count seedVal =
+  List.indexedMap createTile <| randBools count seedVal
 
 
 createGame : Int -> Int -> Int -> Game
 createGame cols rows seedVal =
-  let
-    tiles = List.indexedMap (\i isMine -> Tile i Nothing False isMine ) (randBools (rows*cols) seedVal)
-  in
-    Game False False rows cols tiles
-
--- testing
-{- let
-  g = (createGame 3 3 123545)
-  --gUpd = {g | tiles <-  updateIn 1 (\t -> {t | isMine <- False}) g.tiles}
-  gUpd = {g | tiles <- List.map (\t ->  if t.isMine then t else {t | isRevealed <- True}) g.tiles}
-in
-  --gUpd
-  attemptWinning g -}
-  --revealTile gUpd 0
-
-
-
-
+  Game False False rows cols <| createTiles (rows*cols) seedVal
