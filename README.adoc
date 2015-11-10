@@ -1,0 +1,25 @@
+= Elm Sweeper
+Elm implementation of Minesweeper
+v0.1.0, 2015-11-10: published
+:library: Asciidoctor
+:numbered:
+:idprefix:
+:toc: macro
+
+
+This is a nearly feature complete implementation of the old classic game of Minesweeper using Elm.
+The game logic implementation is very much inspired by https://github.com/cjohansen/react-sweeper[react-sweeper], a JavaScript
+implementation which is using https://facebook.github.io/react/[Facebook React].
+
+
+== Get it up and running
+. http://elm-lang.org/install[Install elm]
+. Clone the repo
+. On the command line: `$elm-sweeper> elm-make Minsweeper.elm --yes --output=minesweeper.js
+. On the command line: `$elm-sweeper> elm-reactor`
+. Open a browser-window/tab and enter the following url: `http://localhost:8000/index.html`
+
+
+== Resources
+- My http://rundis.github.io/blog/2015/elm_sweeper.html[blogpost] which describes how I ported react-sweeper to elm and compares bits and bobs along the way
+- https://github.com/cjohansen/react-sweeper[react-sweeper] by https://github.com/cjohansen[Christian Johansen]
