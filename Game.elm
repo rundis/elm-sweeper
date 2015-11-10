@@ -1,4 +1,4 @@
-module Game (Game, Tile, createGame, revealTile, gameOver) where
+module Game (Game, Tile, createGame, revealTile, GameStatus(..)) where
 
 import List
 import Random
@@ -13,15 +13,17 @@ type alias Tile =
   ,isMine: Bool}
 
 
+type GameStatus = IN_PROGRESS | SAFE | DEAD
+
 type alias Game =
-  {isDead: Bool
-  ,isSafe: Bool
+  {status: GameStatus
   ,rows: Int
   ,cols: Int
   ,tiles: List Tile}
 
 
 type Direction = W | NW | N | NE | E | SE | S | SW
+
 
 
 
@@ -48,8 +50,8 @@ neighbourByDir : Game -> Maybe Tile -> Direction -> Maybe Tile
 neighbourByDir game tile dir =
   let
     tIdx = tileByIdx game
-    isWOk = (\t -> not <| onWEdge game t)
-    isEOk = (\t -> not <| onEEdge game t)
+    isWOk t = not <| onWEdge game t
+    isEOk t = not <| onEEdge game t
   in
     case (tile, dir) of
       (Nothing, _) -> Nothing
@@ -73,7 +75,7 @@ neighbours game tile =
 
 mineCount : Game -> Maybe Tile -> Int
 mineCount game tile =
-  List.length <| List.filter (\t -> t.isMine) <| neighbours game tile
+  List.length <| List.filter .isMine <| neighbours game tile
 
 
 updateIn : Int -> (a -> a) -> List a -> List a
@@ -94,7 +96,7 @@ revealMine tile =
 revealMines : Game -> Game
 revealMines game =
   {game | tiles  <- List.map revealMine game.tiles
-        , isDead <- True}
+        , status <- DEAD}
 
 
 revealThreatCount : Game -> Tile -> Tile
@@ -112,12 +114,12 @@ revealAdjacentSafeTiles game tileId =
         let
           updT = revealThreatCount game t
           updG = {game | tiles <- updateIn tileId (\_ -> updT) game.tiles}
-          f    = (\t g -> if not t.isRevealed then revealAdjacentSafeTiles g t.id else g)
+          fn t g = if not t.isRevealed then revealAdjacentSafeTiles g t.id else g
         in
           if not (updT.threatCount == Just 0) then
             updG
           else
-            List.foldl f updG <| neighbours updG <| Just updT
+            List.foldl fn updG <| neighbours updG <| Just updT
 
 
 isSafe : Game -> Bool
@@ -126,14 +128,10 @@ isSafe game =
     && (List.filter (\t -> not t.isMine && not t.isRevealed) game.tiles |> List.length) == 0
 
 
-gameOver : Game -> Bool
-gameOver game =
-  game.isSafe || game.isDead
-
 
 attemptWinning : Game -> Game
 attemptWinning game =
-  {game | isSafe <- isSafe game }
+  {game | status <- if isSafe game then SAFE else IN_PROGRESS}
 
 
 
@@ -162,4 +160,13 @@ createTiles count seedVal =
 
 createGame : Int -> Int -> Int -> Game
 createGame cols rows seedVal =
-  Game False False rows cols <| createTiles (rows*cols) seedVal
+  Game IN_PROGRESS rows cols <| createTiles (rows*cols) seedVal
+
+
+
+{- List.filter .isRevealed && .isMine
+            [{isRevealed = False, isMine = True},
+             {isRevealed = True, isMine = True},
+             {isRevealed = True, isMine = False},
+             {isRevealed = False, isMine = False}]
+ -}

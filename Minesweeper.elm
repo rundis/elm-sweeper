@@ -1,7 +1,7 @@
 module Minesweeper where
 
 
-import Game exposing (Game)
+import Game exposing (Game, GameStatus(..))
 import Utils
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -17,6 +17,7 @@ type Action =
   | RevealTile Int
 
 
+
 init : Game
 init =
   Game.createGame 15 15 5787345
@@ -26,8 +27,9 @@ update : (Float, Action) -> Game -> Game
 update (time, action) game =
   case action of
     NewGame -> Game.createGame 15 15 (truncate time)
-    RevealTile id -> if Game.gameOver game then game else
+    RevealTile id -> if not (game.status == IN_PROGRESS) then game else
                         Debug.watch "game" (Game.revealTile game id)
+
 
 
 threatCount : Maybe Int -> List Html
@@ -57,10 +59,10 @@ rowView address tiles =
 statusView: Game -> Html
 statusView game =
   let
-    (status, c) = case (game.isSafe, game.isDead) of
-                    (True, _)  -> (" -  You won", "status-won")
-                    (_, True) ->  (" - You lost", "status-lost")
-                    (_, _)     -> ("", "")
+    (status, c) = case game.status of
+                    SAFE          -> (" -  You won", "status-won")
+                    DEAD          -> (" - You lost", "status-lost")
+                    IN_PROGRESS   -> ("", "")
   in
     span [class c] [text status]
 
